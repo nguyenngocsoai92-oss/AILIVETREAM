@@ -1,0 +1,88 @@
+name: Build signed macOS installer
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 35
+    environment: macos-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check signing configuration
+        env:
+          CERT: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for entry in CERT CERT_PASSWORD APPLE_ID APPLE_TEAM_ID APPLE_APP_PASSWORD; do
+            if [[ -z "${!entry}" ]]; then
+              echo "::error::Missing macOS signing configuration: $entry"
+              exit 1
+            fi
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test && npm run typecheck
+      - name: Sign, notarize and verify
+        env:
+          CERT: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          keychain="$work/release.keychain-db"
+          staging="$work/staging"
+          cleanup() {
+            security delete-keychain "$keychain" >/dev/null 2>&1 || true
+            rm -rf "$work"
+          }
+          trap cleanup EXIT
+          password="$(openssl rand -hex 24)"
+          printf '%s' "$CERT" | base64 -D > "$work/cert.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$work/cert.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -d user -s "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain" >/dev/null
+          export MACOS_SIGN_IDENTITY="$(security find-identity -v -p codesigning "$keychain" | awk '/Developer ID Application:/ {print $2; exit}')"
+          test -n "$MACOS_SIGN_IDENTITY"
+          npm run package:mac
+          app='mac-release/SN AI LIVE STUDIO-darwin-arm64/SN AI LIVE STUDIO.app'
+          codesign --verify --deep --strict --verbose=2 "$app"
+          "$app/Contents/MacOS/SN AI LIVE STUDIO" --smoke-test
+          ditto -c -k --keepParent "$app" "$work/app.zip"
+          xcrun notarytool submit "$work/app.zip" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple "$app"
+          xcrun stapler validate "$app"
+          spctl --assess --type execute -vv "$app"
+          mkdir "$staging"
+          ditto "$app" "$staging/SN AI LIVE STUDIO.app"
+          ln -s /Applications "$staging/Applications"
+          dmg='mac-release/SN-AI-LIVE-STUDIO-macOS-arm64-signed.dmg'
+          hdiutil create -format UDZO -fs APFS -volname 'SN AI LIVE STUDIO' -srcfolder "$staging" "$dmg"
+          codesign --sign "$MACOS_SIGN_IDENTITY" --timestamp "$dmg"
+          xcrun notarytool submit "$dmg" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          hdiutil verify "$dmg"
+          spctl --assess --type open --context context:primary-signature -vv "$dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SN-AI-LIVE-STUDIO-macOS-arm64-signed
+          path: mac-release/*-signed.dmg
+          if-no-files-found: error
