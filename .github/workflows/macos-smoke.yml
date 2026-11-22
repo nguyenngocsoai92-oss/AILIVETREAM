@@ -1,0 +1,36 @@
+name: macOS desktop smoke test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.cjs'
+      - '**.tsx'
+      - '**.json'
+      - '**.html'
+      - '**.css'
+      - '.github/workflows/macos-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: macos-15
+    timeout-minutes: 10
+    env:
+      XDG_CONFIG_HOME: ${{ runner.temp }}/sn-studio-config
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Launch Electron and verify React rendered
+        run: npm exec -- electron . --smoke-test
