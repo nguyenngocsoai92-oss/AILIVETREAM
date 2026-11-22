@@ -30,40 +30,45 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-      - run: npm test
-      - run: npm run typecheck
+      - run: npm test && npm run typecheck
       - run: npm run package:mac
-      - name: Verify and archive macOS app
-        run: |
-          set -euo pipefail
-          app="mac-release/SN AI LIVE STUDIO-darwin-$ARCH/SN AI LIVE STUDIO.app"
-          test -f "$app/Contents/Resources/app.asar"
-          "$app/Contents/MacOS/SN AI LIVE STUDIO" --smoke-test
-          ditto -c -k --sequesterRsrc --keepParent "$app" "mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH-app.zip"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}-app
-          path: mac-release/*-app.zip
-          if-no-files-found: error
-      - name: Build and verify disk image
+      - name: Sign preview bundle and build disk image
         run: |
           set -euo pipefail
           app="mac-release/SN AI LIVE STUDIO-darwin-$ARCH/SN AI LIVE STUDIO.app"
           staging="$(mktemp -d)"
-          trap 'rm -rf "$staging"' EXIT
-          ditto "$app" "$staging/SN AI LIVE STUDIO.app"
+          mount=$(mktemp -d)
+          cleanup() {
+            hdiutil detach "$mount" >/dev/null 2>&1 || true
+            rmdir "$mount" || true
+            rm -rf "$staging"
+          }
+          trap cleanup EXIT
+          staged_app="$staging/SN AI LIVE STUDIO.app"
+          ditto "$app" "$staged_app"
+          codesign --force --deep --sign - "$staged_app"
+          codesign --verify --deep --strict --verbose=2 "$staged_app"
           ln -s /Applications "$staging/Applications"
-          target="mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH.dmg"
+          target="mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH-preview.dmg"
+          built=false
           for attempt in 1 2 3; do
             if hdiutil create -ov -format UDZO -fs APFS -volname 'SN AI LIVE STUDIO' -srcfolder "$staging" "$target"; then
-              hdiutil verify "$target"
-              exit 0
+              built=true
+              break
             fi
             sleep "$((attempt * 3))"
           done
-          exit 1
+          test "$built" = true
+          hdiutil verify "$target"
+          hdiutil attach "$target" -nobrowse -readonly -mountpoint "$mount"
+          mounted_app="$mount/SN AI LIVE STUDIO.app"
+          codesign --verify --deep --strict --verbose=2 "$mounted_app"
+          "$mounted_app/Contents/MacOS/SN AI LIVE STUDIO" --smoke-test
+          if ! spctl --assess --type execute -vv "$mounted_app"; then
+            echo '::warning::Preview build does not pass Gatekeeper distribution assessment. Use the Developer ID release workflow for distribution.'
+          fi
       - uses: actions/upload-artifact@v4
         with:
-          name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}
-          path: mac-release/*.dmg
+          name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}-preview
+          path: mac-release/*-preview.dmg
           if-no-files-found: error
