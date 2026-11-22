@@ -1,5 +1,4 @@
 name: Build macOS disk image
-
 on:
   workflow_dispatch:
   push:
@@ -7,10 +6,8 @@ on:
     paths:
       - '.github/workflows/macos-package.yml'
       - 'package-macos.cjs'
-
 permissions:
   contents: read
-
 jobs:
   package:
     strategy:
@@ -23,6 +20,8 @@ jobs:
             arch: x64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
+    env:
+      ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,20 +33,35 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run package:mac
-      - name: Verify app and build disk image
-        env:
-          ARCH: ${{ matrix.arch }}
+      - name: Verify and archive macOS app
         run: |
           set -euo pipefail
           app="mac-release/SN AI LIVE STUDIO-darwin-$ARCH/SN AI LIVE STUDIO.app"
           test -f "$app/Contents/Resources/app.asar"
           "$app/Contents/MacOS/SN AI LIVE STUDIO" --smoke-test
-          mkdir -p mac-release/dmg-root
-          ditto "$app" "mac-release/dmg-root/SN AI LIVE STUDIO.app"
-          ln -s /Applications mac-release/dmg-root/Applications
-          image="mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH.dmg"
-          hdiutil create -ov -format UDZO -volname 'SN AI LIVE STUDIO' -srcfolder mac-release/dmg-root "$image"
-          hdiutil verify "$image"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH-app.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}-app
+          path: mac-release/*-app.zip
+          if-no-files-found: error
+      - name: Build and verify disk image
+        run: |
+          set -euo pipefail
+          app="mac-release/SN AI LIVE STUDIO-darwin-$ARCH/SN AI LIVE STUDIO.app"
+          staging="$(mktemp -d)"
+          trap 'rm -rf "$staging"' EXIT
+          ditto "$app" "$staging/SN AI LIVE STUDIO.app"
+          ln -s /Applications "$staging/Applications"
+          target="mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH.dmg"
+          for attempt in 1 2 3; do
+            if hdiutil create -ov -format UDZO -fs APFS -volname 'SN AI LIVE STUDIO' -srcfolder "$staging" "$target"; then
+              hdiutil verify "$target"
+              exit 0
+            fi
+            sleep "$((attempt * 3))"
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}
