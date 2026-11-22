@@ -6,3 +6,9 @@
 - Tiếp theo — Chạy trên macOS/Windows và bổ sung CI. TikTok Shop, Shopee, ERP và OBS chưa kết nối.
 
 Xem [hướng dẫn chạy desktop](../RUN_DESKTOP.md) và [Master Checklist](MASTER_CHECKLIST.md).
+
+
+## Danh mục và chuẩn bị LIVE
+
+- PRD-01/03, LIVE-01 — Đã có nhập sản phẩm thủ công theo nguồn/tài khoản và lưu một bản nháp phiên vào SQLite. Chặn SKU trùng trong cùng nguồn và tài khoản, chặn chọn sản phẩm ngoài phạm vi phiên.
+- npm test (2 ca), typecheck và build đều đạt. Giá, tồn kho, listing và kết nối chính thức chưa được xác minh.
