@@ -33,3 +33,10 @@ Xem [hướng dẫn chạy desktop](../RUN_DESKTOP.md) và [Master Checklist](MA
 - LIVE-02 — Đã thêm kết nối OBS WebSocket v5 trên cùng máy, đọc trạng thái, chuyển cảnh, bắt đầu và dừng phát có xác nhận.
 - Ba bài kiểm thử Node, kiểm tra TypeScript và build đạt. Bài thử OBS dùng WebSocket giả lập. Chưa kiểm tra bằng OBS thật hoặc nền tảng thật.
 - OAuth và đồng bộ TikTok Shop/Shopee, bình luận, AI và báo cáo chưa hoàn tất. Phát qua OBS cần cấu hình đích và quyền phát sẵn trong OBS.
+
+
+## MC ảo tiếng Việt
+
+- VOI-01/02 đang triển khai. Đã có nhân vật 2D, kịch bản lưu SQLite, hàng đợi đọc bằng macOS và cửa sổ hình/phụ đề riêng để chọn trong OBS.
+- Kiểm tra TypeScript, build và bốn bài kiểm thử tự động đạt. Kiểm thử giọng đọc dùng tiến trình giả lập. Cần kiểm tra âm thanh trên Mac có giọng tiếng Việt và ghép nguồn hình/tiếng trong OBS.
+- Tạm hoãn kết nối TikTok và Shopee theo yêu cầu chủ dự án. Bình luận, AI tư vấn tự động và báo cáo đầy đủ vẫn đang chờ.
