@@ -1,0 +1,30 @@
+# Ma trận tích hợp — 22/11/2026
+
+**Restricted** có bằng chứng tài liệu và cần quyền/chấp thuận. **Unverified** còn thiếu bằng chứng cho capability cụ thể. **Unavailable** chỉ dùng khi có xác nhận rõ không hỗ trợ. **Verified** yêu cầu tài liệu phù hợp, quyền SN và kiểm thử tài khoản phù hợp ở Việt Nam. Hiện tất cả các dòng chưa được thử trên tài khoản SN.
+
+| Nền tảng | Chức năng | Nguồn chính thức / API | Quyền, phạm vi và giới hạn | Trạng thái | Phương án dự phòng | Test thật |
+|---|---|---|---|---|---|---|
+| TikTok | Kết nối tài khoản | [Partner Center](https://partner.tiktokshop.com/docv2) | App đã duyệt, Creator/Seller ủy quyền đúng vai trò; xác nhận TTL/refresh và thị trường | Restricted | Hồ sơ thủ công, không lưu credential sàn | Chưa chạy |
+| TikTok | Đọc bình luận LIVE | [Partner Center](https://partner.tiktokshop.com/docv2) | Chưa xác nhận endpoint, scope, quota | Unverified | Nhập câu hỏi thủ công | Chưa chạy |
+| TikTok | Gửi bình luận LIVE | [Partner Center](https://partner.tiktokshop.com/docv2) | Chưa xác nhận endpoint, quyền gửi hoặc tự động | Unverified | Duyệt, chép và gửi trên công cụ chính thức | Chưa chạy |
+| TikTok | Kho Affiliate Creator | [Get Showcase Products](https://partner.tiktokshop.com/docv2/page/get-showcase-products-202405) | creator.showcase.read hoặc creator.video.write theo tài liệu. Ưu tiên scope đọc. Token Creator và [phê duyệt Affiliate](https://partner.tiktokshop.com/docv2/page/affiliate-integration). Tối đa 2.000 mặt hàng showcase theo tài liệu | Restricted | Nhập danh mục hợp lệ theo tài khoản | Chưa chạy |
+| TikTok | Livebag | [Get Showcase Products](https://partner.tiktokshop.com/docv2/page/get-showcase-products-202405) | Tài liệu mô tả có kết quả livebag nếu Creator đang LIVE. Xác nhận schema, khả năng phân biệt hai danh sách và quota | Restricted | Danh sách riêng do nhân viên kiểm tra | Chưa chạy |
+| TikTok | Sản phẩm đang ghim | [Partner Center](https://partner.tiktokshop.com/docv2) | Chưa xác nhận tín hiệu ghim hoặc quyền thao tác | Unverified | Chọn sản phẩm đang giới thiệu thủ công | Chưa chạy |
+| TikTok | Đơn Seller | [Get Order List](https://partner.tiktokshop.com/docv2/page/get-order-list-202309) | Token Seller, ưu tiên seller.order.info. Xác nhận quyền dữ liệu đơn, market và quota | Restricted | Nhập báo cáo Seller | Chưa chạy |
+| TikTok | Đơn và hoa hồng Creator | [Affiliate API Guide](https://partner.tiktokshop.com/docv2/page/affiliate-integration) | Phê duyệt theo app/đối tác. Xác nhận endpoint Creator, phạm vi LIVE, kỳ và trạng thái thực nhận | Unverified | Nhập báo cáo Affiliate/đối soát | Chưa chạy |
+| TikTok | Lượt xem hoặc thông tin người xem LIVE | [Partner Center](https://partner.tiktokshop.com/docv2) | Chưa xác nhận scope, định nghĩa KPI và quyền PII | Unverified | Báo cáo chính thức khi có | Chưa chạy |
+| TikTok | Tự động, AI Voice và MC ảo | [Quy chế LIVE VN](https://seller-vn.tiktok.com/university/essay?knowledge_id=2447213424297748), [AIGC](https://seller-vn.tiktok.com/university/essay?knowledge_id=6832782790018833&lang=vi-VN) | Hướng dẫn AIGC có điều kiện. Chờ xác nhận riêng cho gửi tự động, giọng công khai và phiên do avatar dẫn | Unverified | Nhân viên dẫn, AI hỗ trợ nội bộ | Chưa chạy |
+| Shopee | Kết nối Seller | [Open Platform](https://open.shopee.com/) | Cần xác minh loại app, ủy quyền shop VN và tài liệu xác thực | Unverified | Hồ sơ shop thủ công | Chưa chạy |
+| Shopee | Đọc bình luận LIVE | [Open Platform](https://open.shopee.com/) | Chưa xác nhận endpoint hoặc quota | Unverified | Nhập câu hỏi thủ công | Chưa chạy |
+| Shopee | Gửi bình luận LIVE | [Open Platform](https://open.shopee.com/) | Chưa xác nhận endpoint, scope hoặc tự động | Unverified | Duyệt, chép và gửi trên công cụ chính thức | Chưa chạy |
+| Shopee | Affiliate và kho Creator LIVE | [Affiliate VN Explorer](https://open-api.affiliate.shopee.vn/explorer/v2) | Có productOfferV2 cho offer. Chưa xác nhận kho riêng của Creator hoặc liên kết với tài khoản phát | Unverified | Nhập danh mục hợp lệ theo Creator | Chưa chạy |
+| Shopee | Livebag | [Open Platform](https://open.shopee.com/) | Chưa xác nhận API đọc/ghi danh sách | Unverified | Kiểm tra danh sách trên Shopee Live | Chưa chạy |
+| Shopee | Sản phẩm đang ghim | [Open Platform](https://open.shopee.com/) | Chưa xác nhận API đọc/ghi trạng thái ghim | Unverified | Người vận hành chọn trong Studio | Chưa chạy |
+| Shopee | Đơn Seller | [v2.order.get_order_detail](https://open.shopee.com/documents/v2/v2.order.get_order_detail?module=94&type=1) | Có trang endpoint chính thức. Cần xác nhận app, shop VN, danh sách đơn, quyền chi tiết và quota | Restricted | Nhập báo cáo Seller | Chưa chạy |
+| Shopee | Đơn, chuyển đổi và hoa hồng Affiliate | [Affiliate VN Explorer](https://open-api.affiliate.shopee.vn/explorer/v2) | Có conversionReport và validatedReport. Cần khóa Affiliate, xác nhận phạm vi LIVE, trường tiền, điều chỉnh và quota | Restricted | Nhập báo cáo Affiliate | Chưa chạy |
+| Shopee | Lượt xem hoặc thông tin người xem LIVE | [Open Platform](https://open.shopee.com/) | Chưa xác nhận endpoint hoặc quyền PII | Unverified | Báo cáo chính thức khi có | Chưa chạy |
+| Shopee | Tự động, AI Voice và MC ảo | [Kênh Người Bán](https://seller.shopee.vn/) | Cần văn bản chính sách hiện hành cho từng hình thức tại VN và loại tài khoản | Unverified | Nhân viên dẫn, AI hỗ trợ nội bộ | Chưa chạy |
+| SN ERP | Catalog, tồn, giá, đơn | Tài liệu nội bộ chưa có | Xác định chủ API, sandbox, quyền đọc theo trường và quota. Chưa kết nối website hoặc VPS | Unverified | Xuất tệp đã duyệt từ ERP | Chưa chạy |
+| OBS | Trạng thái, cảnh, source | [obs-websocket](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md) | WebSocket v5, xác thực và allowlist tác vụ | Unverified | Điều khiển trực tiếp trên OBS | Chưa chạy |
+
+Mỗi lần nghiệm thu ghi ngày, vùng, loại tài khoản, app, endpoint/version, scope, quota, mã kết quả đã che dữ liệu, kiểm thử token hết hạn và quyền bị thu hồi. Không ghi bí mật hoặc dữ liệu khách hàng vào bằng chứng. Mỗi capability mở riêng khi có đủ kết quả.
