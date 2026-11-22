@@ -22,3 +22,7 @@ button:disabled { opacity: .55; cursor: default; }
 .workspace fieldset { max-width: 100%; }
 .product-option { display: block; }
 .product-option input { width: auto; }
+.obs-panel { margin-top: 20px; }
+.obs-panel form label { display: grid; gap: 6px; }
+.obs-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.obs-confirm { background: #eef3f8; padding: 10px 14px 14px; margin-top: 12px; border-radius: 8px; }

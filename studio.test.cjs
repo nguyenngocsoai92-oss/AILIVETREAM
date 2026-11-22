@@ -52,3 +52,50 @@ test('session draft enforces account and source boundaries and persists', () => 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('OBS handshake and stream commands require explicit confirmation', async () => {
+  const { ObsConnection } = require('./obs.cjs');
+  const { createHash } = require('node:crypto');
+  const commands = [];
+  let active = false;
+  let scene = 'Intro';
+  class Socket extends EventTarget {
+    readyState = 1;
+    respond(op, d) {
+      queueMicrotask(() => this.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ op, d }) })));
+    }
+    send(frame) {
+      const { op, d } = JSON.parse(frame);
+      if (op === 1) {
+        const hash = value => createHash('sha256').update(value).digest('base64');
+        assert.equal(d.authentication, hash(hash('secret-salt') + 'challenge'));
+        this.respond(2, { negotiatedRpcVersion: 1 });
+        return;
+      }
+      const { requestType, requestId, requestData } = d;
+      commands.push(requestType);
+      if (requestType === 'StartStream') active = true;
+      if (requestType === 'StopStream') active = false;
+      if (requestType === 'SetCurrentProgramScene') scene = requestData.sceneName;
+      const responseData = requestType === 'GetStreamStatus' ?
+        { outputActive: active, outputReconnecting: false } :
+        { currentProgramSceneName: scene, scenes: [{ sceneName: 'Intro' }, { sceneName: 'Product' }] };
+      this.respond(7, { requestId, requestStatus: { result: true }, responseData });
+    }
+    close() { this.readyState = 3; this.dispatchEvent(new Event('close')); }
+  }
+  const socket = new Socket();
+  const obs = new ObsConnection(url => {
+    assert.equal(url, 'ws://127.0.0.1:4455');
+    socket.respond(0, { authentication: { salt: '-salt', challenge: 'challenge' } });
+    return socket;
+  });
+  await obs.connect({ port: 4455, password: 'secret' });
+  await assert.rejects(obs.stream({ action: 'start' }));
+  assert.deepEqual(commands, []);
+  assert.equal((await obs.switchScene('Product')).scene, 'Product');
+  assert.equal((await obs.stream({ action: 'start', confirmed: true })).active, true);
+  assert.equal((await obs.stream({ action: 'stop', confirmed: true })).active, false);
+  socket.close();
+  assert.deepEqual(await obs.status(), { connected: false });
+});

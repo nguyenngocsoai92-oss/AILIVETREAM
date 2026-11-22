@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
+const { ObsConnection } = require('./obs.cjs');
+const obs = new ObsConnection();
 const { openStudio } = require('./storage.cjs');
 
 let window;
@@ -32,7 +34,7 @@ function createWindow() {
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
-  window.on('closed', () => { window = undefined; unlocked = false; });
+  window.on('closed', () => { window = undefined; unlocked = false; obs.disconnect(); });
   return window.loadFile(join(__dirname, 'dist', 'index.html'));
 }
 
@@ -48,7 +50,7 @@ if (!app.requestSingleInstanceLock()) {
       if (!unlocked) retryAt = Date.now() + 1500;
       return unlocked;
     });
-    handle('studio:logout', () => { unlocked = false; });
+    handle('studio:logout', () => { unlocked = false; obs.disconnect(); });
     handle('studio:load', () => {
       if (!unlocked) throw new Error('Sign in required');
       return studio.load();
@@ -61,6 +63,12 @@ if (!app.requestSingleInstanceLock()) {
       handle('catalog:' + action, input => {
         if (!unlocked) throw new Error('Sign in required');
         return studio.catalog[action](input);
+      });
+    }
+    for (const action of ['connect', 'disconnect', 'status', 'switchScene', 'stream']) {
+      handle('obs:' + action, input => {
+        if (!unlocked) throw new Error('Cần đăng nhập quản trị.');
+        return obs[action](input);
       });
     }
     await createWindow();

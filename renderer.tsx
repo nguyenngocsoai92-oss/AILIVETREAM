@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import './studio.css';
 import { LivePreparation } from './LivePreparation';
+import { ObsStudio } from './ObsStudio';
 
 declare global {
   interface Window {
@@ -93,6 +94,7 @@ function App() {
         </form>
       </section>}
     {configured !== undefined && <p role="status">{status}</p>}
+    {unlocked && <ObsStudio />}
     {unlocked && <LivePreparation />}
   </main>;
 }
