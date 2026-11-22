@@ -16,3 +16,9 @@ button { border: 0; border-radius: 8px; background: #1847bd; color: white; paddi
 button.secondary { background: #e8eff9; color: #162d54; }
 button:disabled { opacity: .55; cursor: default; }
 .note { margin: 22px 0 0; color: #465870; }
+.workspace { display: grid; gap: 16px; margin-top: 20px; }
+.workspace form > label { display: grid; gap: 6px; }
+.workspace select { font: inherit; padding: 6px; }
+.workspace fieldset { max-width: 100%; }
+.product-option { display: block; }
+.product-option input { width: auto; }

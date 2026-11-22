@@ -57,6 +57,12 @@ if (!app.requestSingleInstanceLock()) {
       if (!unlocked) throw new Error('Sign in required');
       return studio.save(name);
     });
+    for (const action of ['list', 'add', 'load', 'save']) {
+      handle('catalog:' + action, input => {
+        if (!unlocked) throw new Error('Sign in required');
+        return studio.catalog[action](input);
+      });
+    }
     await createWindow();
     if (process.argv.includes('--smoke-test')) {
       const heading = await window.webContents.executeJavaScript('new Promise(resolve => { const check = () => { const title = document.querySelector("h1"); if (title) resolve(title.textContent); else requestAnimationFrame(check); }; check(); setTimeout(() => resolve(null), 5000); })');

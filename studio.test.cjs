@@ -28,3 +28,27 @@ test('initial setup, authentication and settings persist after reopening SQLite'
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('session draft enforces account and source boundaries and persists', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sn-catalog-'));
+  const file = join(dir, 'studio.sqlite');
+  let store = openStudio(file);
+  try {
+    const catalog = store.catalog;
+    const [a] = catalog.add({ source: 'affiliate', account: 'A', sku: 'P1', name: 'A product' });
+    catalog.add({ source: 'affiliate', account: 'B', sku: 'P1', name: 'B product' });
+    const b = catalog.list().find(p => p.account === 'B');
+    const sn = catalog.add({ source: 'erp', sku: 'P1', name: 'SN product' }).find(p => p.source === 'erp');
+    assert.throws(() => catalog.add({ source: 'affiliate', account: 'A', sku: 'P1', name: 'Duplicate' }));
+    const draft = { title: 'Phiên thử', mode: 'mixed', account: 'A', ids: [a.id, sn.id] };
+    assert.deepEqual(catalog.save(draft), draft);
+    assert.throws(() => catalog.save({ ...draft, ids: [b.id] }));
+    assert.throws(() => catalog.save({ ...draft, mode: 'erp' }));
+    store.close();
+    store = openStudio(file);
+    assert.deepEqual(store.catalog.load(), draft);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

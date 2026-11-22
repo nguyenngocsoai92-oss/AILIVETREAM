@@ -1,4 +1,5 @@
 const { DatabaseSync } = require('node:sqlite');
+const { openCatalog } = require("./catalog.cjs");
 const { randomBytes, scryptSync, timingSafeEqual } = require('node:crypto');
 
 function openStudio(path) {
@@ -13,6 +14,7 @@ function openStudio(path) {
     INSERT OR IGNORE INTO settings VALUES (1, 'SN Group');
   `);
   return {
+    catalog: openCatalog(db),
     configured: () => Boolean(db.prepare('SELECT id FROM administrator').get()),
     authenticate(password) {
       if (typeof password !== 'string' || password.length < 12 || password.length > 128) return false;

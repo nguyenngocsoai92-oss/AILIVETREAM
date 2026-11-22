@@ -7,3 +7,10 @@ contextBridge.exposeInMainWorld('studio', {
   load: () => ipcRenderer.invoke('studio:load'),
   save: name => ipcRenderer.invoke('studio:save', name),
 });
+
+contextBridge.exposeInMainWorld('catalog', {
+  list: () => ipcRenderer.invoke('catalog:list'),
+  add: input => ipcRenderer.invoke('catalog:add', input),
+  load: () => ipcRenderer.invoke('catalog:load'),
+  save: input => ipcRenderer.invoke('catalog:save', input),
+});
