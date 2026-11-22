@@ -1,0 +1,14 @@
+# Chạy SN AI LIVE STUDIO V0.1
+
+Cài Node.js 24 trở lên. Tại thư mục gốc của kho AILIVETREAM, chạy:
+
+```bash
+npm ci
+npm start
+```
+
+Lần đầu mở, tạo mật khẩu quản trị cục bộ từ 12 ký tự. Sau đó thử đổi tên studio, lưu, đóng ứng dụng, mở lại và đăng nhập để kiểm tra tên đã lưu. Electron dùng thư mục dữ liệu ứng dụng của hệ điều hành để lưu SQLite.
+
+Kiểm tra mã bằng `npm test`, `npm run typecheck` và `npm run build`. Sau khi build, có thể kiểm tra renderer Electron bằng `npx electron . --smoke-test` trong môi trường có màn hình.
+
+Bản này cung cấp một tài khoản quản trị cục bộ và cấu hình studio. Chưa có phân quyền nhiều người dùng, kết nối TikTok Shop/Shopee/SN ERP/OBS hoặc bộ cài đã ký.
