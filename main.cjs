@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
+const { mkdirSync, writeFileSync } = require('node:fs');
 const { ObsConnection } = require('./obs.cjs');
 const obs = new ObsConnection();
 const { HostSpeech, normalizeScript } = require('./host.cjs');
@@ -80,6 +81,14 @@ function createWindow() {
   return window.loadFile(join(__dirname, 'dist', 'index.html'));
 }
 
+const smokeTest = process.argv.includes('--smoke-test');
+const screenshotDirectory = smokeTest && process.env.SN_SMOKE_SCREENSHOTS;
+if (screenshotDirectory) {
+  const testData = join(screenshotDirectory, 'test-data');
+  mkdirSync(testData, { recursive: true });
+  app.setPath('userData', testData);
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
@@ -137,7 +146,7 @@ if (!app.requestSingleInstanceLock()) {
       return host.state;
     });
     await createWindow();
-    if (process.argv.includes('--smoke-test')) {
+    if (smokeTest) {
       const hasElement = (view, selector) => view.webContents.executeJavaScript(`
         new Promise(resolve => {
           const until = Date.now() + 5000;
@@ -150,8 +159,24 @@ if (!app.requestSingleInstanceLock()) {
         })
       `);
       if (!await hasElement(window, 'main h1')) throw new Error('Studio renderer did not mount');
+      if (screenshotDirectory) {
+        if (!await hasElement(window, '#password')) throw new Error('Setup form did not mount');
+        await window.webContents.executeJavaScript(`
+          (() => {
+            const input = document.querySelector('#password');
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'fixture-local-only-2026');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          })()
+        `);
+        await window.webContents.executeJavaScript("document.querySelector('#password').form.requestSubmit()");
+        if (!await hasElement(window, '.host-panel textarea')) throw new Error('Studio did not unlock');
+        writeFileSync(join(screenshotDirectory, 'SN-AI-LIVE-STUDIO.png'), (await window.webContents.capturePage()).toPNG());
+      }
       await openHostStage();
       if (!await hasElement(stage, '.host-stage .host-caption')) throw new Error('Virtual host stage did not mount');
+      if (screenshotDirectory) {
+        writeFileSync(join(screenshotDirectory, 'SN-AI-MC-AO.png'), (await stage.webContents.capturePage()).toPNG());
+      }
       app.quit();
     }
   }).catch(error => { console.error(error); app.exit(1); });
