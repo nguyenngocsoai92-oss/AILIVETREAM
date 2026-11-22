@@ -9,7 +9,11 @@ async function main() {
     'main.cjs', 'preload.cjs', 'storage.cjs', 'catalog.cjs', 'package.json',
   ]);
 
+  const identity = process.env.MACOS_SIGN_IDENTITY;
+  const signing = identity ? { osxSign: { identity, continueOnError: false } } : {};
+
   await packager({
+    ...signing,
     dir: __dirname,
     name: 'SN AI LIVE STUDIO',
     appBundleId: 'vn.sngroup.sn-ai-live-studio',
