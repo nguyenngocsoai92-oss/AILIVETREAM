@@ -8,13 +8,15 @@
     "start": "npm run build && electron .",
     "build": "vite build --base ./",
     "typecheck": "tsc",
-    "test": "node --test studio.test.cjs"
+    "test": "node --test studio.test.cjs",
+    "package:mac": "npm run build && node package-macos.cjs"
   },
   "dependencies": {
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@electron/packager": "20.3.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "electron": "45.4.1",
