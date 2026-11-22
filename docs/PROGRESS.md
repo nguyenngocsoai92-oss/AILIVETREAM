@@ -12,3 +12,10 @@ Xem [hướng dẫn chạy desktop](../RUN_DESKTOP.md) và [Master Checklist](MA
 
 - PRD-01/03, LIVE-01 — Đã có nhập sản phẩm thủ công theo nguồn/tài khoản và lưu một bản nháp phiên vào SQLite. Chặn SKU trùng trong cùng nguồn và tài khoản, chặn chọn sản phẩm ngoài phạm vi phiên.
 - npm test (2 ca), typecheck và build đều đạt. Giá, tồn kho, listing và kết nối chính thức chưa được xác minh.
+
+
+## Đóng gói macOS
+
+- REL-02 — Đã thêm workflow build bundle .app và DMG theo kiến trúc Apple Silicon/Intel. Workflow chạy test, typecheck, build, mở bundle và kiểm tra ảnh đĩa.
+- Apple Silicon đã có DMG được kiểm tra từ lượt đầu. Intel đã xây và mở bundle, nhưng hdiutil báo ổ đĩa bận. Lượt kế tiếp bổ sung ZIP và thử lại ảnh đĩa.
+- Gói V0.1 chưa có Developer ID và notarization. Phạm vi chức năng theo RUN_DESKTOP.md.
