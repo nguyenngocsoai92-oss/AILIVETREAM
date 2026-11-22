@@ -138,8 +138,20 @@ if (!app.requestSingleInstanceLock()) {
     });
     await createWindow();
     if (process.argv.includes('--smoke-test')) {
-      const heading = await window.webContents.executeJavaScript('new Promise(resolve => { const check = () => { const title = document.querySelector("h1"); if (title) resolve(title.textContent); else requestAnimationFrame(check); }; check(); setTimeout(() => resolve(null), 5000); })');
-      if (heading !== 'SN AI LIVE STUDIO') throw new Error('Renderer did not mount');
+      const hasElement = (view, selector) => view.webContents.executeJavaScript(`
+        new Promise(resolve => {
+          const until = Date.now() + 5000;
+          const check = () => {
+            if (document.querySelector(${JSON.stringify(selector)})) resolve(true);
+            else if (Date.now() < until) setTimeout(check, 25);
+            else resolve(false);
+          };
+          check();
+        })
+      `);
+      if (!await hasElement(window, 'main h1')) throw new Error('Studio renderer did not mount');
+      await openHostStage();
+      if (!await hasElement(stage, '.host-stage .host-caption')) throw new Error('Virtual host stage did not mount');
       app.quit();
     }
   }).catch(error => { console.error(error); app.exit(1); });
