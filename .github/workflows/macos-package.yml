@@ -1,0 +1,55 @@
+name: Build macOS disk image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/macos-package.yml'
+      - 'package-macos.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run package:mac
+      - name: Verify app and build disk image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          app="mac-release/SN AI LIVE STUDIO-darwin-$ARCH/SN AI LIVE STUDIO.app"
+          test -f "$app/Contents/Resources/app.asar"
+          "$app/Contents/MacOS/SN AI LIVE STUDIO" --smoke-test
+          mkdir -p mac-release/dmg-root
+          ditto "$app" "mac-release/dmg-root/SN AI LIVE STUDIO.app"
+          ln -s /Applications mac-release/dmg-root/Applications
+          image="mac-release/SN-AI-LIVE-STUDIO-macOS-$ARCH.dmg"
+          hdiutil create -ov -format UDZO -volname 'SN AI LIVE STUDIO' -srcfolder mac-release/dmg-root "$image"
+          hdiutil verify "$image"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SN-AI-LIVE-STUDIO-macOS-${{ matrix.arch }}
+          path: mac-release/*.dmg
+          if-no-files-found: error
