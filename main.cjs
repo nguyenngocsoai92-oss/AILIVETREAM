@@ -2,9 +2,51 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
 const { ObsConnection } = require('./obs.cjs');
 const obs = new ObsConnection();
+const { HostSpeech, normalizeScript } = require('./host.cjs');
+let window;
+let stage;
+const host = new HostSpeech(state => {
+  for (const target of [window, stage]) {
+    if (target && !target.isDestroyed()) target.webContents.send('host:state', state);
+  }
+});
+
+function endHostSession() {
+  host.stop();
+  stage?.close();
+}
+
+async function openHostStage() {
+  if (stage) {
+    stage.focus();
+    return;
+  }
+  const view = new BrowserWindow({
+    width: 540,
+    height: 760,
+    autoHideMenuBar: true,
+    backgroundColor: '#142443',
+    webPreferences: {
+      preload: join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  stage = view;
+  view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  view.webContents.on('will-navigate', event => event.preventDefault());
+  view.webContents.on('did-finish-load', () => view.webContents.send('host:state', host.state));
+  view.on('closed', () => { stage = undefined; });
+  try {
+    await view.loadFile(join(__dirname, 'dist', 'index.html'), { hash: 'host-stage' });
+  } catch (error) {
+    view.close();
+    throw error;
+  }
+}
 const { openStudio } = require('./storage.cjs');
 
-let window;
 let studio;
 let unlocked = false;
 let retryAt = 0;
@@ -34,7 +76,7 @@ function createWindow() {
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
-  window.on('closed', () => { window = undefined; unlocked = false; obs.disconnect(); });
+  window.on('closed', () => { window = undefined; unlocked = false; obs.disconnect(); endHostSession(); });
   return window.loadFile(join(__dirname, 'dist', 'index.html'));
 }
 
@@ -50,7 +92,7 @@ if (!app.requestSingleInstanceLock()) {
       if (!unlocked) retryAt = Date.now() + 1500;
       return unlocked;
     });
-    handle('studio:logout', () => { unlocked = false; obs.disconnect(); });
+    handle('studio:logout', () => { unlocked = false; obs.disconnect(); endHostSession(); });
     handle('studio:load', () => {
       if (!unlocked) throw new Error('Sign in required');
       return studio.load();
@@ -71,6 +113,29 @@ if (!app.requestSingleInstanceLock()) {
         return obs[action](input);
       });
     }
+    const hostOperations = {
+      load: () => ({ script: studio.loadHostScript(), state: host.state }),
+      save: script => {
+        normalizeScript(script);
+        studio.saveHostScript(script);
+      },
+      show: openHostStage,
+      play: script => host.play(script),
+      stop: () => host.stop(),
+    };
+    for (const [action, operation] of Object.entries(hostOperations)) {
+      handle('host:' + action, input => {
+        if (!unlocked) throw new Error('Cần đăng nhập quản trị.');
+        return operation(input);
+      });
+    }
+    // The output window can read playback status, but cannot control speech or studio settings.
+    ipcMain.handle('host:stageState', event => {
+      if (!stage || event.sender !== stage.webContents || event.senderFrame !== stage.webContents.mainFrame) {
+        throw new Error('Unauthorized stage');
+      }
+      return host.state;
+    });
     await createWindow();
     if (process.argv.includes('--smoke-test')) {
       const heading = await window.webContents.executeJavaScript('new Promise(resolve => { const check = () => { const title = document.querySelector("h1"); if (title) resolve(title.textContent); else requestAnimationFrame(check); }; check(); setTimeout(() => resolve(null), 5000); })');

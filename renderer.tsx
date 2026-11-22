@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './studio.css';
 import { LivePreparation } from './LivePreparation';
 import { ObsStudio } from './ObsStudio';
+import { HostStage, VirtualHost } from './VirtualHost';
 
 declare global {
   interface Window {
@@ -94,9 +95,10 @@ function App() {
         </form>
       </section>}
     {configured !== undefined && <p role="status">{status}</p>}
+    {unlocked && <VirtualHost />}
     {unlocked && <ObsStudio />}
     {unlocked && <LivePreparation />}
   </main>;
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(location.hash === '#host-stage' ? <HostStage /> : <App />);

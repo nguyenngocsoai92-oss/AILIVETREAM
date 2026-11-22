@@ -99,3 +99,32 @@ test('OBS handshake and stream commands require explicit confirmation', async ()
   socket.close();
   assert.deepEqual(await obs.status(), { connected: false });
 });
+
+test('virtual host validates Vietnamese scripts, queues segments and stops', async () => {
+  const { EventEmitter } = require('node:events');
+  const { HostSpeech, normalizeScript } = require('./host.cjs');
+  const states = [];
+  const spoken = [];
+  const children = [];
+  const host = new HostSpeech(state => states.push(state), (file, args) => {
+    assert.equal(file, '/usr/bin/say');
+    assert.deepEqual(args, ['-v', 'Linh']);
+    const child = new EventEmitter();
+    child.stdin = new EventEmitter();
+    child.stdin.end = line => spoken.push(line);
+    child.kill = () => { child.killed = true; };
+    children.push(child);
+    return child;
+  }, async () => ({ stdout: 'Alex en_US # Hello\nLinh vi_VN # Xin chào' }), 'darwin');
+  assert.throws(() => normalizeScript('x'.repeat(501)));
+  assert.deepEqual(normalizeScript('Xin chào\r\n  \n Giới thiệu '), ['Xin chào', 'Giới thiệu']);
+  await host.play('Xin chào\nGiới thiệu');
+  assert.deepEqual(spoken, ['Xin chào']);
+  children[0].emit('close', 0);
+  assert.deepEqual(spoken, ['Xin chào', 'Giới thiệu']);
+  assert.equal(states.at(-1).index, 2);
+  host.stop();
+  assert.equal(children[1].killed, true);
+  children[1].emit('close', 0);
+  assert.equal(states.at(-1).phase, 'idle');
+});

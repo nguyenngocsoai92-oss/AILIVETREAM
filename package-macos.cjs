@@ -6,7 +6,7 @@ async function main() {
   }
 
   const included = new Set([
-    'main.cjs', 'preload.cjs', 'storage.cjs', 'catalog.cjs', 'obs.cjs', 'package.json',
+    'main.cjs', 'preload.cjs', 'storage.cjs', 'catalog.cjs', 'obs.cjs', 'host.cjs', 'package.json',
   ]);
 
   const identity = process.env.MACOS_SIGN_IDENTITY;

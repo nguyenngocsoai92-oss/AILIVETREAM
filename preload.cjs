@@ -22,3 +22,17 @@ contextBridge.exposeInMainWorld('obs', {
   switchScene: name => ipcRenderer.invoke('obs:switchScene', name),
   stream: input => ipcRenderer.invoke('obs:stream', input),
 });
+
+contextBridge.exposeInMainWorld('virtualHost', {
+  load: () => ipcRenderer.invoke('host:load'),
+  save: script => ipcRenderer.invoke('host:save', script),
+  show: () => ipcRenderer.invoke('host:show'),
+  play: script => ipcRenderer.invoke('host:play', script),
+  stop: () => ipcRenderer.invoke('host:stop'),
+  stageState: () => ipcRenderer.invoke('host:stageState'),
+  subscribe: callback => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on('host:state', listener);
+    return () => ipcRenderer.removeListener('host:state', listener);
+  },
+});

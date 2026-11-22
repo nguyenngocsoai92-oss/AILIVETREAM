@@ -11,6 +11,9 @@ function openStudio(path) {
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1), name TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS host_script (
+      id INTEGER PRIMARY KEY CHECK (id = 1), script TEXT NOT NULL
+    );
     INSERT OR IGNORE INTO settings VALUES (1, 'SN Group');
   `);
   return {
@@ -31,6 +34,10 @@ function openStudio(path) {
       db.prepare('UPDATE settings SET name = ? WHERE id = 1').run(cleaned);
       return cleaned;
     },
+    loadHostScript: () => db.prepare('SELECT script FROM host_script WHERE id = 1').get()?.script ?? '',
+    saveHostScript: script => db.prepare(
+      'INSERT INTO host_script VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET script = excluded.script'
+    ).run(script),
     close: () => db.close(),
   };
 }

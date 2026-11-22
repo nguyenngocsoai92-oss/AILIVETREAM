@@ -28,3 +28,9 @@ Có thể tạo app bundle bằng `npm ci && npm run package:mac` trên máy Mac
 5. Khi đã kết thúc, bấm **Dừng phát OBS** và xác nhận. Ngắt kết nối hoặc đăng xuất chỉ ngắt điều khiển. Luồng đang phát tiếp tục cho tới khi có lệnh dừng.
 
 Kết nối chỉ tới OBS trên cùng máy. Tài khoản sàn, quyền phát và đích phát được cấu hình bên ngoài. Chưa có kiểm thử với OBS hoặc tài khoản sàn thật.
+
+## MC ảo trên Mac
+
+Vào **MC ảo**, nhập mỗi đoạn một dòng và lưu trên máy. Bấm **Đọc kịch bản** để nghe giọng tiếng Việt macOS và xem hoạt ảnh miệng. Nếu ứng dụng báo thiếu giọng, tải giọng tiếng Việt trong cài đặt trợ năng của Mac. Dùng **Dừng đọc** để dừng, kể cả khi app đang tìm giọng.
+
+Bấm **Mở cửa sổ MC cho OBS** để mở cửa sổ hình và phụ đề riêng. Chọn cửa sổ này làm nguồn hình trong OBS. Kiểm tra đường thu âm thanh của giọng đọc cục bộ trong OBS trước khi đưa ra luồng phát. Hoạt ảnh miệng chạy theo trạng thái đọc của từng đoạn. Giọng đọc đã được kiểm thử bằng tiến trình giả lập, chưa được nghe thử trên máy Mac có cài giọng tiếng Việt.
