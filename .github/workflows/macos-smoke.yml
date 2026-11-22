@@ -32,3 +32,13 @@ jobs:
       - run: npm run build
       - name: Launch Electron and verify React rendered
         run: npm exec -- electron . --smoke-test
+
+      - name: Capture studio and MC windows
+        env:
+          SN_SMOKE_SCREENSHOTS: ${{ runner.temp }}/sn-studio-screenshots
+        run: npm exec -- electron . --smoke-test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SN-AI-LIVE-STUDIO-screenshots
+          path: ${{ runner.temp }}/sn-studio-screenshots/*.png
+          if-no-files-found: error
