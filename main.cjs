@@ -158,6 +158,14 @@ if (!app.requestSingleInstanceLock()) {
           check();
         })
       `);
+      const captureWindow = async (view, name) => {
+        await view.webContents.executeJavaScript(
+          'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))'
+        );
+        await new Promise(resolve => setTimeout(resolve, 350));
+        await view.webContents.capturePage();
+        writeFileSync(join(screenshotDirectory, name), (await view.webContents.capturePage()).toPNG());
+      };
       if (!await hasElement(window, 'main h1')) throw new Error('Studio renderer did not mount');
       if (screenshotDirectory) {
         if (!await hasElement(window, '#password')) throw new Error('Setup form did not mount');
@@ -170,12 +178,12 @@ if (!app.requestSingleInstanceLock()) {
         `);
         await window.webContents.executeJavaScript("document.querySelector('#password').form.requestSubmit()");
         if (!await hasElement(window, '.host-panel textarea')) throw new Error('Studio did not unlock');
-        writeFileSync(join(screenshotDirectory, 'SN-AI-LIVE-STUDIO.png'), (await window.webContents.capturePage()).toPNG());
+        await captureWindow(window, 'SN-AI-LIVE-STUDIO.png');
       }
       await openHostStage();
       if (!await hasElement(stage, '.host-stage .host-caption')) throw new Error('Virtual host stage did not mount');
       if (screenshotDirectory) {
-        writeFileSync(join(screenshotDirectory, 'SN-AI-MC-AO.png'), (await stage.webContents.capturePage()).toPNG());
+        await captureWindow(stage, 'SN-AI-MC-AO.png');
       }
       app.quit();
     }
