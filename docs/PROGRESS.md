@@ -26,3 +26,10 @@ Xem [hướng dẫn chạy desktop](../RUN_DESKTOP.md) và [Master Checklist](MA
 - REL-02 — Đã thêm quy trình ký Developer ID, notarization, stapler và kiểm tra Gatekeeper cho Apple Silicon. Lượt kiểm thử GitHub Actions dừng ở bước kiểm tra cấu hình vì thiếu chứng chỉ.
 - Kho cần GitHub Actions secrets MACOS_CERT_P12_BASE64, MACOS_CERT_PASSWORD, APPLE_ID, APPLE_TEAM_ID và APPLE_APP_PASSWORD trong môi trường macos-release. Chỉ người quản lý thông tin ký của SN Group nhập các giá trị.
 - Chưa có DMG đã ký để phát hành. Các bản thử nghiệm cũ vẫn có thể bị Gatekeeper từ chối.
+
+
+## Điều khiển OBS
+
+- LIVE-02 — Đã thêm kết nối OBS WebSocket v5 trên cùng máy, đọc trạng thái, chuyển cảnh, bắt đầu và dừng phát có xác nhận.
+- Ba bài kiểm thử Node, kiểm tra TypeScript và build đạt. Bài thử OBS dùng WebSocket giả lập. Chưa kiểm tra bằng OBS thật hoặc nền tảng thật.
+- OAuth và đồng bộ TikTok Shop/Shopee, bình luận, AI và báo cáo chưa hoàn tất. Phát qua OBS cần cấu hình đích và quyền phát sẵn trong OBS.
